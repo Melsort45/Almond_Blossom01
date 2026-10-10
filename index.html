@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARA Registry Hub // Almond Blossom [ID: LP-8839]</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --mint-primary: #51e5be;
+            --mint-glow: rgba(81, 229, 190, 0.4);
+            --turquoise-deep: #0b2e2d;
+            --cyber-dark: #070e13;
+            --panel-bg: rgba(11, 30, 36, 0.75);
+            --panel-border: rgba(81, 229, 190, 0.25);
+            --text-gold: #f3d178;
+            --text-light: #e0f2f1;
+            --text-dim: #7da09a;
+            --danger-red: #ff4a6e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--cyber-dark);
+            color: var(--text-light);
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(81, 229, 190, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(243, 209, 120, 0.05) 0%, transparent 40%),
+                linear-gradient(to bottom, rgba(7, 14, 19, 0.95), rgba(7, 14, 19, 0.98));
+            background-attachment: fixed;
+        }
+
+        /* Canvas Background Animation */
+        #petalCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Overlay Scanline & HUD Grid */
+        .hud-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.6;
+        }
+
+        .hud-border {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            border: 1px solid rgba(81, 229, 190, 0.2);
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        .hud-border::before, .hud-border::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--mint-primary);
+        }
+
+        .hud-border::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+        .hud-border::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+        /* Main Container */
+        .app-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 30px 20px 80px;
+        }
+
+        /* Header / Top Bar */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--panel-border);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(5px);
+        }
+
+        .brand-title {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 2px;
+        }
+
+        .brand-title h1 {
+            font-size: 1.8rem;
+            color: #fff;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--mint-glow);
+        }
+
+        .brand-title span {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--mint-primary);
+            letter-spacing: 4px;
+        }
+
+        .sys-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(81, 229, 190, 0.1);
+            border: 1px solid var(--mint-primary);
+            color: var(--mint-primary);
+            border-radius: 4px;
+            box-shadow: 0 0 10px var(--mint-glow);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--mint-primary);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(81, 229, 190, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(81, 229, 190, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(81, 229, 190, 0); }
+        }
+
+        /* Hero Banner Grid */
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        /* Character Artwork & Upload Placeholder */
+        .art-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 480px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .art-preview {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit: cover;
+            display: none;
+        }
+
+        .art-placeholder {
+            text-align: center;
+            padding: 30px;
+            z-index: 2;
+        }
+
+        .art-placeholder svg {
+            width: 64px;
+            height: 64px;
+            fill: var(--text-dim);
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .art-card:hover .art-placeholder svg {
+            fill: var(--mint-primary);
+            transform: scale(1.1);
+        }
+
+        .art-placeholder p {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .upload-btn {
+            background: transparent;
+            border: 1px solid var(--mint-primary);
+            color: var(--mint-primary);
+            padding: 8px 18px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .upload-btn:hover {
+            background: var(--mint-primary);
+            color: var(--cyber-dark);
+            box-shadow: 0 0 15px var(--mint-glow);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .rank-tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(7, 14, 19, 0.85);
+            border: 1px solid var(--text-gold);
+            color: var(--text-gold);
+            padding: 4px 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            z-index: 3;
+        }
+
+        /* Profile Header Info */
+        .profile-summary {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .profile-header-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid rgba(125, 160, 154, 0.2);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .char-title h2 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.8rem;
+            color: #fff;
+            letter-spacing: 2px;
+            line-height: 1.1;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .char-title h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            color: var(--mint-primary);
+            letter-spacing: 3px;
+            margin-top: 5px;
+        }
+
+        .popularity-box {
+            background: rgba(7, 14, 19, 0.6);
+            border: 1px solid var(--panel-border);
+            padding: 15px 20px;
+            border-radius: 6px;
+            text-align: right;
+            min-width: 220px;
+        }
+
+        .pop-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+        }
+
+        .pop-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--text-gold);
+            text-shadow: 0 0 10px rgba(243, 209, 120, 0.3);
+            line-height: 1.2;
+        }
+
+        .boost-btn {
+            margin-top: 8px;
+            width: 100%;
+            background: linear-gradient(45deg, rgba(81, 229, 190, 0.2), rgba(243, 209, 120, 0.2));
+            border: 1px solid var(--mint-primary);
+            color: var(--mint-primary);
+            padding: 6px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 3px;
+        }
+
+        .boost-btn:hover {
+            background: var(--mint-primary);
+            color: var(--cyber-dark);
+            box-shadow: 0 0 12px var(--mint-glow);
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            background: rgba(7, 14, 19, 0.4);
+            border-left: 2px solid var(--mint-primary);
+            padding: 10px 15px;
+        }
+
+        .meta-item .lbl {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .meta-item .val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: #fff;
+            margin-top: 2px;
+        }
+
+        .bio-snippet {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-light);
+            background: rgba(7, 14, 19, 0.3);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px dashed rgba(81, 229, 190, 0.15);
+        }
+
+        /* Action Row (Simplified) */
+        .action-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            background: rgba(81, 229, 190, 0.1);
+            border: 1px solid var(--mint-primary);
+            color: var(--mint-primary);
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-btn:hover {
+            background: var(--mint-primary);
+            color: var(--cyber-dark);
+            box-shadow: 0 0 20px var(--mint-glow);
+        }
+
+        /* Navigation Tabs */
+        .tab-nav {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid var(--panel-border);
+            margin-bottom: 25px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: rgba(11, 30, 36, 0.5);
+            border: 1px solid transparent;
+            border-bottom: none;
+            color: var(--text-dim);
+            padding: 12px 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 6px 6px 0 0;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-light);
+            background: rgba(81, 229, 190, 0.1);
+        }
+
+        .tab-btn.active {
+            color: var(--mint-primary);
+            background: var(--panel-bg);
+            border-color: var(--panel-border);
+            border-bottom: 2px solid var(--cyber-dark);
+            box-shadow: 0 -4px 10px rgba(81, 229, 190, 0.1);
+        }
+
+        /* Tab Content Section */
+        .tab-content {
+            display: none;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            min-height: 350px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-heading {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--text-gold);
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(243, 209, 120, 0.2);
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .data-card {
+            background: rgba(7, 14, 19, 0.5);
+            border: 1px solid rgba(81, 229, 190, 0.15);
+            padding: 20px;
+            border-radius: 6px;
+        }
+
+        .data-card h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            color: var(--mint-primary);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-card p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-light);
+        }
+
+        /* Everyday Behavior Item List */
+        .behavior-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .behavior-item {
+            background: rgba(7, 14, 19, 0.5);
+            border-left: 3px solid var(--mint-primary);
+            padding: 15px 20px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .behavior-item h5 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-gold);
+            margin-bottom: 5px;
+        }
+
+        .behavior-item p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .behavior-item .insight {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* Timeline / Story Setup */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            bottom: 5px;
+            width: 2px;
+            background: var(--panel-border);
+        }
+
+        .timeline-node {
+            position: relative;
+            background: rgba(7, 14, 19, 0.5);
+            border: 1px solid rgba(81, 229, 190, 0.15);
+            padding: 18px 22px;
+            border-radius: 6px;
+        }
+
+        .timeline-node::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 22px;
+            width: 10px;
+            height: 10px;
+            background: var(--mint-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--mint-glow);
+        }
+
+        .node-tag {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-gold);
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .node-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        /* Audio Deck Player Footer */
+        .audio-player-deck {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(7, 14, 19, 0.95);
+            border-top: 1px solid var(--panel-border);
+            padding: 12px 30px;
+            z-index: 900;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(15px);
+        }
+
+        .deck-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .deck-icon {
+            width: 38px;
+            height: 38px;
+            background: rgba(81, 229, 190, 0.1);
+            border: 1px solid var(--mint-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--mint-primary);
+        }
+
+        .deck-text div:first-child {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .deck-text div:last-child {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .deck-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .play-btn {
+            background: var(--mint-primary);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px var(--mint-glow);
+        }
+
+        /* Responsive Layout */
+        @media (max-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+            .meta-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .profile-header-meta {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .popularity-box {
+                text-align: left;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HUD Frame & Canvas Animation -->
+    <div class="hud-overlay"></div>
+    <div class="hud-border"></div>
+    <canvas id="petalCanvas"></canvas>
+
+    <div class="app-container">
+        <!-- Top Bar Header -->
+        <header>
+            <div class="brand-title">
+                <h1>Metropolis Gallery</h1>
+                <span>Artistic Registry Agency // Database</span>
+            </div>
+            <div class="sys-status">
+                <div class="status-badge">
+                    <div class="pulse-dot"></div>
+                    <span>REGISTRY ACTIVE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Character Hero Overview -->
+        <section class="hero-grid">
+            <!-- Left: Artwork Card -->
+            <div class="art-card" id="artCard">
+                <span class="rank-tag">ARA RANK #08</span>
+                <img id="artPreview" class="art-preview" src="" alt="Almond Blossom Concept Artwork">
+                <div class="art-placeholder" id="artPlaceholder">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19,5V19H5V5H19M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M14.14,11.86L11.14,15.73L9,13.14L6,17H18L14.14,11.86Z"/>
+                    </svg>
+                    <p>Character Visual Reference</p>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload Artwork</button>
+                    <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
+                </div>
+            </div>
+
+            <!-- Right: Profile Summary -->
+            <div class="profile-summary">
+                <div>
+                    <div class="profile-header-meta">
+                        <div class="char-title">
+                            <h2>Almond Blossom</h2>
+                            <h3>"BLOSSOM" // FLEUR VANE</h3>
+                        </div>
+                        <div class="popularity-box">
+                            <div class="pop-label">POPULARITY INDEX</div>
+                            <div class="pop-score" id="popScore">842,910</div>
+                            <button class="boost-btn" onclick="boostPopularity()">+ BOOST VOTE</button>
+                        </div>
+                    </div>
+
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <div class="lbl">Registered Age</div>
+                            <div class="val">22 Years Old</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="lbl">Classification</div>
+                            <div class="val">Living Painting</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="lbl">Primary Discipline</div>
+                            <div class="val">Ambient Musician</div>
+                        </div>
+                    </div>
+
+                    <div class="bio-snippet">
+                        "She lives behind a carefully crafted mask as the Agency’s most quickly risen star Ambient Musician. To the public, she performs with ethereal serenity, causing almond branches to bloom across the stage. Behind the scenes, she is hyper-vigilant, terrified that a single flaw will send her to the Restoration Workshop."
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="action-btn" onclick="playAudioTrack()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        </svg>
+                        MUSIC STREAM
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Tabs Section -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab(event, 'tab-core')">1. CHARACTER CORE</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-psychology')">2. PSYCHOLOGY</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-behavior')">3. EVERYDAY BEHAVIOR</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-universe')">4. THE UNIVERSE</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-setup')">5. STORY SETUP</button>
+        </nav>
+
+        <!-- Tab 1: Character Core -->
+        <div id="tab-core" class="tab-content active">
+            <div class="content-heading">
+                <span>Part 1 // Identity & Appearance</span>
+                <span style="font-size: 0.8rem; color: var(--text-dim);">FILE: LP-CORE-8839</span>
+            </div>
+            <div class="grid-2col">
+                <div class="data-card">
+                    <h4>Appearance & Aesthetic</h4>
+                    <p>Blossom has a vibrant, eye-catching streetwear aesthetic designed to stand out on stage and under bright broadcast lights. She features fluffy hair in pale turquoise and soft mint-green shades (reflecting Van Gogh's palette).</p>
+                    <br>
+                    <p>Small white almond blossoms and delicate branches involuntarily sprout from her hair, wrists, and shoulders depending on her emotional state. She wears oversized pastel streetwear featuring bold brushstroke patterns that mimic oil paint textures.</p>
+                </div>
+                <div class="data-card">
+                    <h4>Public Persona vs. Internal Reality</h4>
+                    <p>To the media, she behaves with ethereal grace, quiet serenity, and comforting warmth. She creates immersive acoustic performances where her powers soothe audiences.</p>
+                    <br>
+                    <p>Behind the scenes, she is guarded and hyper-vigilant, treating every concert as a high-stakes situation where losing composure could trigger an ugly physical transformation. Her central contradiction: she longs to quit performing, yet depends on public votes to maintain her legal freedom.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Psychology -->
+        <div id="tab-psychology" class="tab-content">
+            <div class="content-heading">
+                <span>Part 2 // Trauma, Lie, Want & Need</span>
+                <span style="font-size: 0.8rem; color: var(--text-dim);">FILE: PSYCH-ANALYSIS</span>
+            </div>
+            <div class="grid-2col">
+                <div class="data-card">
+                    <h4>Trauma (Defining Event)</h4>
+                    <p>During her first official Agency evaluation at age fourteen, she suffered a severe panic attack under live cameras. Anxiety caused her powers to erupt, growing giant thorned almond branches that wrecked the press room before decaying into ash. This plummeted her Popularity Index and placed her under strict government surveillance.</p>
+                </div>
+                <div class="data-card">
+                    <h4>The Lie</h4>
+                    <p style="font-style: italic; color: var(--text-gold);">"If I show any flaw, weakness, or raw emotion, people will deem me worthless and I will lose myself."</p>
+                </div>
+                <div class="data-card">
+                    <h4>The Want (External Goal)</h4>
+                    <p>Win the annual Gala and secure the top-ranked Living Painting spot to gain full legal autonomy and permanent immunity from the Restoration Workshop.</p>
+                </div>
+                <div class="data-card">
+                    <h4>The Need (Internal Growth)</h4>
+                    <p>To understand and accept that her worth comes from her imperfect humanity—not from maintaining an artificial, flawless image for public approval.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Everyday Behavior -->
+        <div id="tab-behavior" class="tab-content">
+            <div class="content-heading">
+                <span>Part 3 // Mannerisms & Habits</span>
+                <span style="font-size: 0.8rem; color: var(--text-dim);">OBSERVATIONAL DATA</span>
+            </div>
+            <div class="behavior-list">
+                <div class="behavior-item">
+                    <h5>Ordering Tea / Food</h5>
+                    <p>Orders warm jasmine tea with an exact list of specifications: two drops of honey, extra hot, served in a paper cup with a sleeve so her fingers don't sweat. Speaks with a serene, polite, and modulated tone.</p>
+                    <div class="insight">→ Reveals an intense need for control over tiny details, masked behind polished friendliness.</div>
+                </div>
+                <div class="behavior-item">
+                    <h5>Reaction to Sudden Plan Changes</h5>
+                    <p>Maintains her smile, but her eyes widen slightly. She immediately picks at the skin around her thumbs, adjusts her sleeves to hide her wrists, and compulsively reschedules her day on her phone.</p>
+                    <div class="insight">→ Reveals high anxiety, low flexibility, and panic when control slips away.</div>
+                </div>
+                <div class="behavior-item">
+                    <h5>When Nobody Is Watching</h5>
+                    <p>In her private dressing room, she kicks off her heavy shoes, slumps on the floor, ties her hair back in a messy bun, and eats cheap candies while staring blankly at the ceiling.</p>
+                    <div class="insight">→ Shows she exhausts herself performing 24/7. Away from cameras, she is just an exhausted 22-year-old girl.</div>
+                </div>
+                <div class="behavior-item">
+                    <h5>Handling Silence</h5>
+                    <p>Avoids silence at all costs: keeps lo-fi ambient music playing on headphones, leaves a TV show running on mute, or quietly hums under her breath.</p>
+                    <div class="insight">→ Silence allows her inner fears of being "defective" or sent to Restoration to take over.</div>
+                </div>
+                <div class="behavior-item">
+                    <h5>Nervous Habit / Detail</h5>
+                    <p>When stress spikes, tiny involuntary white almond buds sprout on her wrists and shoulders. She wears oversized long-sleeve jackets to hide any growth from the public.</p>
+                    <div class="insight">→ Shows how her body betrays her emotions, forcing her to constantly hide her transformations.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: The Universe -->
+        <div id="tab-universe" class="tab-content">
+            <div class="content-heading">
+                <span>Part 4 // Universe & World Rules</span>
+                <span style="font-size: 0.8rem; color: var(--text-dim);">SETTING: METROPOLIS GALLERY</span>
+            </div>
+            <div class="grid-2col" style="margin-bottom: 25px;">
+                <div class="data-card">
+                    <h4>World Context</h4>
+                    <p>Metropolis Gallery is an advanced cyber-neoclassical city filled with broadcast screens. Living Paintings (personifications of famous art) exist alongside humans under strict government surveillance by the <strong>Artistic Registry Agency (ARA)</strong>.</p>
+                </div>
+                <div class="data-card">
+                    <h4>World as Pressure</h4>
+                    <p>This universe turns human emotion into a punishable flaw. By broadcasting every moment of Blossom's life and measuring her worth through live ratings, the world constantly reinforces her Lie that she must never show weakness.</p>
+                </div>
+            </div>
+
+            <h4 style="font-family: 'Orbitron', sans-serif; color: var(--text-gold); margin-bottom: 15px;">TWO MANDATORY LAWS</h4>
+            <div class="grid-2col">
+                <div class="data-card" style="border-left: 3px solid var(--text-gold);">
+                    <h5 style="color: var(--text-gold); font-family: 'Orbitron', sans-serif; margin-bottom: 5px;">1. The Popularity Index</h5>
+                    <p>A Living Painting’s legal rights, luxury, and personal freedom are directly scaled to their real-time public ranking. Falling off the leaderboard means losing basic civil liberties.</p>
+                </div>
+                <div class="data-card" style="border-left: 3px solid var(--danger-red);">
+                    <h5 style="color: var(--danger-red); font-family: 'Orbitron', sans-serif; margin-bottom: 5px;">2. Mandatory Restoration</h5>
+                    <p>Any Living Painting displaying uncontrolled emotional outbursts, physical flaws, or public mistakes with a dropping index is forcibly detained and taken to the Restoration Workshop to be reprogrammed.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Story Setup -->
+        <div id="tab-setup" class="tab-content">
+            <div class="content-heading">
+                <span>Part 5 // Narrative Arc Summary</span>
+                <span style="font-size: 0.8rem; color: var(--text-dim);">GALA TRIALS OVERVIEW</span>
+            </div>
+            <div class="timeline">
+                <div class="timeline-node">
+                    <div class="node-tag">INCITING INCIDENT</div>
+                    <div class="node-title">The Autonomy Announcement</div>
+                    <p>The Artistic Registry Agency announces that the trials for this year's Gala will grant the Top-Ranked Living Painting full legal autonomy and permanent immunity from the Restoration Workshop.</p>
+                </div>
+
+                <div class="timeline-node">
+                    <div class="node-tag">CONFLICT</div>
+                    <div class="node-title">Sabotage by Mona Lisa</div>
+                    <p>Blossom faces Mona Lisa, her former close friend turned rival and the city's premier TV host. Consumed by years of pressure to maintain her "flawless smile," Mona Lisa harbors deep resentment toward Blossom. Driven by jealousy, Mona Lisa secretly sabotages Blossom during live trials to trigger a panic breakdown that will send her to Restoration.</p>
+                </div>
+
+                <div class="timeline-node">
+                    <div class="node-tag">CLIMAX</div>
+                    <div class="node-title">Live Broadcast Breakdown</div>
+                    <p>During the live televised final performance, Mona Lisa’s sabotage pushes Blossom to a breaking point, causing wild almond branches to erupt from her instruments and shatter the set. Instead of hiding, Blossom exposes Mona Lisa’s manipulation and confronts the Agency's cruelty in front of millions.</p>
+                </div>
+
+                <div class="timeline-node">
+                    <div class="node-tag">RESOLUTION</div>
+                    <div class="node-title">Authenticity Over Perfection</div>
+                    <p>Blossom loses the official title due to rule-breaking, but her raw vulnerability captivates the public, sending her Popularity Index to record highs and keeping her safe from Restoration. Safe at last, she accepts her Need. Meanwhile, Mona Lisa wins officially, but watching Blossom receive true love makes her victory feel hollow—causing her iconic smile to falter on live TV for the first time.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Audio Player Footer -->
+    <div class="audio-player-deck">
+        <div class="deck-info">
+            <div class="deck-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+            </div>
+            <div class="deck-text">
+                <div id="songTitle">Blossoms in the Cyber Fog (Ambient Loop)</div>
+                <div>ARTIST: Almond Blossom // LIVE FEED</div>
+            </div>
+        </div>
+        <div class="deck-controls">
+            <button class="play-btn" id="audioToggle" onclick="toggleAudio()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#070e13">
+                    <path id="playIcon" d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* Interactive Tabs */
+        function switchTab(evt, tabId) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        /* Image Upload Handler */
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('artPreview');
+                    const placeholder = document.getElementById('artPlaceholder');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        /* Popularity Score Booster */
+        let score = 842910;
+        function boostPopularity() {
+            score += Math.floor(Math.random() * 150) + 50;
+            document.getElementById('popScore').innerText = score.toLocaleString();
+            createFloatingPetal();
+        }
+
+        /* Web Audio Synthesizer (Simulated Ambient Sound) */
+        let audioCtx = null;
+        let isPlaying = false;
+        let oscillator = null;
+        let gainNode = null;
+
+        function toggleAudio() {
+            if (!isPlaying) {
+                playAudioTrack();
+            } else {
+                stopAudioTrack();
+            }
+        }
+
+        function playAudioTrack() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            oscillator = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(220, audioCtx.currentTime); // Chord Tone A3
+
+            // Soft swell envelope
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 2);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            isPlaying = true;
+
+            document.getElementById('playIcon').setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+            document.getElementById('songTitle').innerText = "Blossoms in the Cyber Fog (Playing...)";
+        }
+
+        function stopAudioTrack() {
+            if (gainNode && oscillator) {
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+                setTimeout(() => {
+                    oscillator.stop();
+                    isPlaying = false;
+                }, 1000);
+            }
+            document.getElementById('playIcon').setAttribute('d', 'M8 5v14l11-7z');
+            document.getElementById('songTitle').innerText = "Blossoms in the Cyber Fog (Paused)";
+        }
+
+        /* Canvas Particle Animation (Falling Mint Petals) */
+        const canvas = document.getElementById('petalCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const petals = [];
+        for (let i = 0; i < 35; i++) {
+            petals.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 5 + 3,
+                speedY: Math.random() * 0.8 + 0.3,
+                speedX: Math.random() * 0.5 - 0.25,
+                opacity: Math.random() * 0.5 + 0.2,
+                rotation: Math.random() * 360
+            });
+        }
+
+        function createFloatingPetal() {
+            petals.push({
+                x: Math.random() * canvas.width,
+                y: canvas.height + 10,
+                size: Math.random() * 7 + 4,
+                speedY: -(Math.random() * 1.5 + 1),
+                speedX: Math.random() * 1 - 0.5,
+                opacity: 0.8,
+                rotation: Math.random() * 360
+            });
+        }
+
+        function animatePetals() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            petals.forEach((p, index) => {
+                p.y += p.speedY;
+                p.x += p.speedX;
+                p.rotation += 0.5;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = `rgba(81, 229, 190, ${p.opacity})`;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, p.size, p.size / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                if (p.y > canvas.height + 20 || p.y < -20) {
+                    petals[index].y = -10;
+                    petals[index].x = Math.random() * canvas.width;
+                }
+            });
+
+            requestAnimationFrame(animatePetals);
+        }
+        animatePetals();
+    </script>
+</body>
+</html>
