@@ -189,8 +189,9 @@
             position: absolute;
             top: 0;
             left: 0;
-            object-fit: cover;
-            display: none;
+            object-fit: contain;
+            display: block;
+            z-index: 1;
         }
 
         .art-placeholder {
@@ -715,15 +716,13 @@
             <!-- Left: Artwork Card -->
             <div class="art-card" id="artCard">
                 <span class="rank-tag">ARA RANK #08</span>
-                <img id="artPreview" class="art-preview" src="" alt="Almond Blossom Concept Artwork">
-                <div class="art-placeholder" id="artPlaceholder">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19,5V19H5V5H19M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M14.14,11.86L11.14,15.73L9,13.14L6,17H18L14.14,11.86Z"/>
-                    </svg>
-                    <p>Character Visual Reference</p>
-                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload Artwork</button>
-                    <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
-                </div>
+
+                <img
+                    id="artPreview"
+                    class="art-preview"
+                    src="022.png"
+                    alt="Almond Blossom Concept Artwork"
+                >
             </div>
 
             <!-- Right: Profile Summary -->
@@ -732,7 +731,7 @@
                     <div class="profile-header-meta">
                         <div class="char-title">
                             <h2>Almond Blossom</h2>
-                            <h3>"BLOSSOM" // FLEUR VANE</h3>
+                            <h3>"BLOSSOM" // VINCENT VAN GOGH</h3>
                         </div>
                         <div class="popularity-box">
                             <div class="pop-label">POPULARITY INDEX</div>
@@ -790,9 +789,9 @@
             <div class="grid-2col">
                 <div class="data-card">
                     <h4>Appearance & Aesthetic</h4>
-                    <p>Blossom has a vibrant, eye-catching streetwear aesthetic designed to stand out on stage and under bright broadcast lights. She features fluffy hair in pale turquoise and soft mint-green shades (reflecting Van Gogh's palette).</p>
+                    <p>She has a soft pastel aesthetic with light blonde, layered hair that fades into blush-pink tips, styled into two low, volumized pigtails tied with almond petal tips. Pink almond blossoms and delicate branches sprout directly from her hair, framing her blue eyes and soft expression. </p>
                     <br>
-                    <p>Small white almond blossoms and delicate branches involuntarily sprout from her hair, wrists, and shoulders depending on her emotional state. She wears oversized pastel streetwear featuring bold brushstroke patterns that mimic oil paint textures.</p>
+                    <p>She wears an oversized sky-blue jacket with exaggerated sleeves over a short, pleated mint-blue dress featuring subtle teal branch patterns that mimic Van Gogh's oil paint strokes. Her outfit is accented with a gold teardrop pendant, high-waisted white thigh-high stockings with a subtle floral stem marking on her left thigh, and light blue petal-collared ankle boots with chunky white heels. Her posture is gentle and collected.</p>
                 </div>
                 <div class="data-card">
                     <h4>Public Persona vs. Internal Reality</h4>
@@ -929,6 +928,13 @@
 
     </div>
 
+    <audio
+    id="musicAudio"
+    src="music/HOME_Resonance.mp3"
+    preload="metadata"
+    loop
+    ></audio>
+
     <!-- Audio Player Footer -->
     <div class="audio-player-deck">
         <div class="deck-info">
@@ -938,7 +944,7 @@
                 </svg>
             </div>
             <div class="deck-text">
-                <div id="songTitle">Blossoms in the Cyber Fog (Ambient Loop)</div>
+                <div id="songTitle">HOME Resonance</div>
                 <div>ARTIST: Almond Blossom // LIVE FEED</div>
             </div>
         </div>
@@ -987,59 +993,44 @@
             document.getElementById('popScore').innerText = score.toLocaleString();
             createFloatingPetal();
         }
-
-        /* Web Audio Synthesizer (Simulated Ambient Sound) */
-        let audioCtx = null;
-        let isPlaying = false;
-        let oscillator = null;
-        let gainNode = null;
+        
+        const musicAudio = document.getElementById('musicAudio');
+        const songTitle = document.getElementById('songTitle');
+        const playIcon = document.getElementById('playIcon');
 
         function toggleAudio() {
-            if (!isPlaying) {
+            if (musicAudio.paused) {
                 playAudioTrack();
             } else {
                 stopAudioTrack();
             }
         }
 
-        function playAudioTrack() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        async function playAudioTrack() {
+            try {
+                await musicAudio.play();
+
+                playIcon.setAttribute(
+                    'd',
+                    'M6 19h4V5H6v14zm8-14v14h4V5h-4z'
+                );
+            } catch (error) {
+                console.error('Error al reproducir:', error);
+                console.log('Ruta del audio:', musicAudio.currentSrc);
+                console.log('Código de error:', musicAudio.error?.code);
+                console.log('Detalle del audio:', musicAudio.error?.message);
+
+                songTitle.innerText = 'Error al cargar la canción';
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
-            oscillator = audioCtx.createOscillator();
-            gainNode = audioCtx.createGain();
-
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(220, audioCtx.currentTime); // Chord Tone A3
-
-            // Soft swell envelope
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 2);
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.start();
-            isPlaying = true;
-
-            document.getElementById('playIcon').setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
-            document.getElementById('songTitle').innerText = "Blossoms in the Cyber Fog (Playing...)";
         }
 
         function stopAudioTrack() {
-            if (gainNode && oscillator) {
-                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
-                setTimeout(() => {
-                    oscillator.stop();
-                    isPlaying = false;
-                }, 1000);
-            }
-            document.getElementById('playIcon').setAttribute('d', 'M8 5v14l11-7z');
-            document.getElementById('songTitle').innerText = "Blossoms in the Cyber Fog (Paused)";
+            musicAudio.pause();
+
+            playIcon.setAttribute(
+                'd',
+                'M8 5v14l11-7z'
+            );
         }
 
         /* Canvas Particle Animation (Falling Mint Petals) */
